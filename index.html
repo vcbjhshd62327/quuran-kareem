@@ -42,6 +42,14 @@ body.light { background:#f5f5f5; color:#111; }
   color: gold;
 }
 
+/* بسم الله */
+.basmala {
+  text-align: center;
+  color: gold;
+  font-size: 22px;
+  margin: 10px 0;
+}
+
 /* التحكم */
 .controls {
   display: flex;
@@ -58,32 +66,40 @@ select, button {
   cursor: pointer;
 }
 
-/* المحتوى */
+/* الصفحة */
 .quran-container {
   height: 65vh;
   overflow: hidden;
   padding: 15px;
   direction: rtl;
+  perspective: 1200px;
 }
 
+/* أنيميشن قلب الصفحة */
 .page {
   display: none;
-  animation: fade 0.3s ease-in-out;
+  transform: rotateY(90deg);
+  opacity: 0;
+  transition: 0.6s ease;
 }
 
 .page.active {
-  display: block;
+  display: inline;
+  transform: rotateY(0deg);
+  opacity: 1;
 }
 
+/* الآيات جنب بعض */
 .ayah {
-  display: block;
   font-size: 22px;
-  line-height: 2.2;
-  margin-bottom: 10px;
+  line-height: 2.4;
+  display: inline;
+  margin-left: 8px;
 }
 
 .ayah-number {
   color: gold;
+  font-size: 16px;
 }
 
 /* الفوتر */
@@ -93,11 +109,6 @@ select, button {
   padding-top: 10px;
   margin-top: 10px;
   color: gold;
-}
-
-@keyframes fade {
-  from {opacity: 0;}
-  to {opacity: 1;}
 }
 </style>
 
@@ -111,6 +122,8 @@ select, button {
     <div class="surah-name" id="surahName"></div>
     <div class="juz" id="infoHeader"></div>
   </div>
+
+  <div class="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
 
   <div class="controls">
     <select id="surahSelect"></select>
@@ -141,11 +154,12 @@ const surahs = [
 ];
 
 let currentPage = 0;
-let ayahsPerPage = 10;
+let ayahsPerPage = 8;
 let currentAyahs = [];
 
 // dropdown
 let select = document.getElementById("surahSelect");
+
 surahs.forEach((s,i)=>{
   let opt = document.createElement("option");
   opt.value = i+1;
@@ -153,9 +167,10 @@ surahs.forEach((s,i)=>{
   select.appendChild(opt);
 });
 
-let last = localStorage.getItem("lastSurah") || 1;
-select.value = last;
-loadSurah(last);
+// آخر سورة محفوظة
+let lastSurah = localStorage.getItem("lastSurah") || 1;
+select.value = lastSurah;
+loadSurah(lastSurah);
 
 select.onchange = ()=>{
   loadSurah(select.value);
@@ -170,16 +185,17 @@ function loadSurah(num){
     let surah = data.data;
 
     currentAyahs = surah.ayahs;
-    currentPage = 0;
+    currentPage = parseInt(localStorage.getItem("lastPage_"+num)) || 0;
 
     document.getElementById("surahName").innerText = "سورة " + surah.name;
+    document.getElementById("infoHeader").innerText = "الجزء " + surah.ayahs[0].juz;
 
-    renderPages();
+    renderPages(num);
   });
 }
 
 // تقسيم الصفحات
-function renderPages(){
+function renderPages(surahNum){
   let container = document.getElementById("quran");
   container.innerHTML = "";
 
@@ -190,18 +206,11 @@ function renderPages(){
   }
 
   pages.forEach((page,index)=>{
-
     let div = document.createElement("div");
-    div.className = "page" + (index===0 ? " active":"");
+    div.className = "page";
 
-    let first = page[0].numberInSurah;
-    let last = page[page.length-1].numberInSurah;
-
-    let juz = page[0].juz;
-
-    if(index === 0){
-      document.getElementById("infoHeader").innerText =
-        "الجزء " + juz;
+    if(index === currentPage){
+      div.classList.add("active");
     }
 
     page.forEach(a=>{
@@ -213,27 +222,19 @@ function renderPages(){
       `;
     });
 
-    div.dataset.range = first + "-" + last;
-
     container.appendChild(div);
   });
 
-  updateFooter();
+  updateFooter(pages.length);
 }
 
 // footer
-function updateFooter(){
-  let pages = document.querySelectorAll(".page");
-  let active = pages[currentPage];
-
-  if(active){
-    document.getElementById("pageInfo").innerText =
-      "الآيات: " + active.dataset.range +
-      " | صفحة " + (currentPage+1) + "/" + pages.length;
-  }
+function updateFooter(total){
+  document.getElementById("pageInfo").innerText =
+    "صفحة " + (currentPage+1) + " / " + total;
 }
 
-// تغيير صفحة
+// تغيير الصفحة
 function changePage(dir){
   let pages = document.querySelectorAll(".page");
 
@@ -242,14 +243,16 @@ function changePage(dir){
   currentPage += dir;
 
   if(currentPage < 0) currentPage = 0;
-  if(currentPage >= pages.length) currentPage = pages.length - 1;
+  if(currentPage >= pages.length) currentPage = pages.length-1;
 
   pages[currentPage].classList.add("active");
 
-  updateFooter();
+  localStorage.setItem("lastPage_"+select.value, currentPage);
+
+  updateFooter(pages.length);
 }
 
-/* Swipe من أي مكان */
+/* Swipe احترافي */
 let startX = 0;
 let startY = 0;
 
@@ -266,14 +269,8 @@ document.addEventListener("touchend", (e)=>{
   let diffY = endY - startY;
 
   if(Math.abs(diffX) > Math.abs(diffY)){
-
-    if(diffX < -60){
-      changePage(1);
-    }
-
-    if(diffX > 60){
-      changePage(-1);
-    }
+    if(diffX < -50) changePage(1);
+    if(diffX > 50) changePage(-1);
   }
 },{passive:true});
 
