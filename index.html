@@ -7,130 +7,134 @@
 <link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet">
 
 <style>
-body{
-  margin:0;
-  font-family:"Amiri",serif;
-  background:#0d0d0d;
-  color:white;
-  overflow:hidden;
+body {
+  margin: 0;
+  font-family: "Amiri", serif;
+  background: #0d0d0d;
+  color: white;
+  overflow: hidden;
 }
 
-/* سكرول أفقي */
-.slider{
-  display:flex;
-  width:100vw;
-  height:100vh;
-  overflow-x:auto;
-  scroll-snap-type:x mandatory;
-  scroll-behavior:smooth;
+/* السلايدر */
+.slider {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-behavior: smooth;
+}
+
+/* إخفاء السكرول */
+.slider::-webkit-scrollbar {
+  display: none;
 }
 
 /* الصفحة */
-.page{
-  min-width:100vw;
-  height:100vh;
-  scroll-snap-align:start;
-  box-sizing:border-box;
-  padding:15px;
-  overflow-y:auto;
-  border:5px solid gold;
+.page {
+  min-width: 100vw;
+  height: 100vh;
+  scroll-snap-align: start;
+  box-sizing: border-box;
+  padding: 20px;
+  overflow-y: auto;
+  border: 5px solid gold;
 }
 
 /* الهيدر */
-.header{
-  text-align:center;
-  border-bottom:2px solid gold;
-  padding-bottom:8px;
-  margin-bottom:10px;
-}
-
-.title{
-  font-size:22px;
-  font-weight:bold;
-}
-
-.sub{
-  font-size:14px;
-  color:#ccc;
+.header {
+  text-align: center;
+  border-bottom: 2px solid gold;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
 }
 
 /* الآيات */
-.ayah{
-  font-size:22px;
-  line-height:2.2;
-  display:block;
-  margin:8px 0;
-  text-align:right;
-  direction:rtl;
+.ayah {
+  font-size: 22px;
+  line-height: 2.2;
+  display: block;
 }
 
-.basmala{
-  text-align:center;
-  color:gold;
-  margin:10px 0;
-  font-size:20px;
+.basmala {
+  text-align: center;
+  color: gold;
+  font-size: 20px;
+  margin: 10px 0;
 }
+
+/* أزرار التنقل */
+.navBtn {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  background: gold;
+  color: black;
+  border: none;
+  padding: 15px;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+#leftBtn { left: 10px; }
+#rightBtn { right: 10px; }
+
 </style>
-
 </head>
 
 <body>
+
+<button class="navBtn" id="leftBtn">◀</button>
+<button class="navBtn" id="rightBtn">▶</button>
 
 <div class="slider" id="slider"></div>
 
 <script>
 
-let surahNumber = 1; // الفاتحة (تقدر تغيرها)
-let ayahsPerPage = 8;
+let ayahsAll = [];
+const chunkSize = 10; // 👈 عدد الآيات في كل صفحة
 
-fetch(`https://api.alquran.cloud/v1/surah/${surahNumber}`)
-.then(res=>res.json())
-.then(data=>{
-
-  let surah = data.data;
-  let ayahs = surah.ayahs;
-
-  let pages = [];
-
-  // تقسيم الآيات لصفحات
-  for(let i=0;i<ayahs.length;i+=ayahsPerPage){
-    pages.push(ayahs.slice(i,i+ayahsPerPage));
-  }
-
-  buildPages(pages,surah);
+fetch("https://api.alquran.cloud/v1/quran/quran-uthmani")
+.then(res => res.json())
+.then(data => {
+  ayahsAll = data.data.ayahs;
+  buildPages();
 });
 
-function buildPages(pages,surah){
+function buildPages(){
+  let slider = document.getElementById("slider");
 
-  let slider=document.getElementById("slider");
+  for(let i = 0; i < ayahsAll.length; i += chunkSize){
 
-  pages.forEach((page,index)=>{
+    let chunk = ayahsAll.slice(i, i + chunkSize);
 
-    let start = page[0].numberInSurah;
-    let end = page[page.length-1].numberInSurah;
-    let juz = page[0].juz;
+    let page = document.createElement("div");
+    page.className = "page";
 
-    let div=document.createElement("div");
-    div.className="page";
-
-    div.innerHTML=`
-      <div class="header">
-        <div class="title">سورة ${surah.name}</div>
-        <div class="sub">
-          الجزء: ${juz} | الآيات: ${start} - ${end}
-        </div>
-      </div>
-
+    page.innerHTML = `
+      <div class="header">صفحة ${Math.floor(i / chunkSize) + 1}</div>
       <div class="basmala">بسم الله الرحمن الرحيم</div>
     `;
 
-    page.forEach(a=>{
-      div.innerHTML+=`<div class="ayah">${a.text}</div>`;
+    chunk.forEach(a => {
+      page.innerHTML += `<div class="ayah">${a.text}</div>`;
     });
 
-    slider.appendChild(div);
-  });
+    slider.appendChild(page);
+  }
 }
+
+/* التحكم بالسهم */
+const slider = document.getElementById("slider");
+
+document.getElementById("leftBtn").onclick = () => {
+  slider.scrollBy({ left: -window.innerWidth, behavior: "smooth" });
+};
+
+document.getElementById("rightBtn").onclick = () => {
+  slider.scrollBy({ left: window.innerWidth, behavior: "smooth" });
+};
 
 </script>
 
