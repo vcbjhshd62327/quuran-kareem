@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>القرآن الكريم</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet">
+
+<style>
+body {
+  margin: 0;
+  font-family: "Amiri", serif;
+  overflow: hidden;
+}
+
+body.dark { background:#0d0d0d; color:#f5f5f5; }
+body.light { background:#f5f5f5; color:#111; }
+
+.quran-frame {
+  border: 10px solid gold;
+  border-radius: 20px;
+  margin: 15px;
+  padding: 10px;
+  box-shadow: 0 0 20px gold;
+}
+
+/* الهيدر */
+.header {
+  text-align: center;
+  border-bottom: 2px solid gold;
+  padding-bottom: 10px;
+}
+
+.surah-name { font-size: 24px; font-weight: bold; }
+.juz { font-size: 16px; color: gold; }
+
+/* التحكم */
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+select, button {
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: none;
+}
+
+/* الآيات */
+.quran-container {
+  overflow: hidden;
+  height: 65vh;
+  padding: 15px;
+  direction: rtl;
+  position: relative;
+}
+
+.page {
+  display: none;
+  animation: fade 0.3s ease-in-out;
+}
+
+.page.active {
+  display: block;
+}
+
+.ayah {
+  display: block;
+  font-size: 22px;
+  line-height: 2.2;
+  margin-bottom: 10px;
+}
+
+.ayah-number { color: gold; }
+
+/* الفوتر */
+.footer {
+  text-align: center;
+  border-top: 2px solid gold;
+  padding-top: 10px;
+  margin-top: 10px;
+  color: gold;
+}
+
+@keyframes fade {
+  from {opacity: 0;}
+  to {opacity: 1;}
+}
+</style>
+</head>
+
+<body class="dark">
+
+<div class="quran-frame">
+
+  <div class="header">
+    <div class="surah-name" id="surahName"></div>
+    <div class="juz" id="infoHeader"></div>
+  </div>
+
+  <div class="controls">
+    <select id="surahSelect"></select>
+    <button onclick="toggleMode()">🌙/☀️</button>
+  </div>
+
+  <div class="quran-container" id="quran"></div>
+
+  <div class="footer" id="pageInfo"></div>
+
+</div>
+
+<script>
+
+const surahs = [
+"الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
+"هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه",
+"الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم",
+"لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر",
+"فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق",
+"الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة",
+"الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج",
+"نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس",
+"التكوير","الإنفطار","المطففين","الإنشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد",
+"الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات",
+"القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر",
+"المسد","الإخلاص","الفلق","الناس"
+];
+
+let currentPage = 0;
+let ayahsPerPage = 10;
+let currentAyahs = [];
+
+// السور dropdown
+let select = document.getElementById("surahSelect");
+surahs.forEach((s,i)=>{
+  let opt = document.createElement("option");
+  opt.value = i+1;
+  opt.text = (i+1)+" - "+s;
+  select.appendChild(opt);
+});
+
+let last = localStorage.getItem("lastSurah") || 1;
+select.value = last;
+loadSurah(last);
+
+select.onchange = ()=>{
+  loadSurah(select.value);
+  localStorage.setItem("lastSurah", select.value);
+};
+
+// تحميل السورة
+function loadSurah(num){
+  fetch(`https://api.alquran.cloud/v1/surah/${num}`)
+  .then(r=>r.json())
+  .then(data=>{
+    let surah = data.data;
+    currentAyahs = surah.ayahs;
+    currentPage = 0;
+
+    document.getElementById("surahName").innerText = "سورة " + surah.name;
+
+    renderPages();
+  });
+}
+
+// تقسيم الآيات صفحات
+function renderPages(){
+  let container = document.getElementById("quran");
+  container.innerHTML = "";
+
+  let pages = [];
+
+  for(let i=0;i<currentAyahs.length;i+=ayahsPerPage){
+    pages.push(currentAyahs.slice(i,i+ayahsPerPage));
+  }
+
+  pages.forEach((page, index)=>{
+    let div = document.createElement("div");
+    div.className = "page" + (index===0 ? " active":"");
+
+    let first = page[0].numberInSurah;
+    let last = page[page.length-1].numberInSurah;
+
+    let juz = page[0].juz;
+
+    document.getElementById("infoHeader").innerText =
+      "الجزء " + juz;
+
+    page.forEach(a=>{
+      div.innerHTML += `<span class="ayah">${a.text} <span class="ayah-number">(${a.numberInSurah})</span></span>`;
+    });
+
+    container.appendChild(div);
+
+    div.dataset.range = first+"-"+last;
+  });
+
+  updateFooter();
+}
+
+// تحديث الفوتر
+function updateFooter(){
+  let pages = document.querySelectorAll(".page");
+  let active = pages[currentPage];
+
+  if(active){
+    document.getElementById("pageInfo").innerText =
+      "الآيات: " + active.dataset.range +
+      " | صفحة " + (currentPage+1) + "/" + pages.length;
+  }
+}
+
+// تغيير صفحة
+function changePage(dir){
+  let pages = document.querySelectorAll(".page");
+  pages[currentPage].classList.remove("active");
+
+  currentPage += dir;
+
+  if(currentPage < 0) currentPage = 0;
+  if(currentPage >= pages.length) currentPage = pages.length-1;
+
+  pages[currentPage].classList.add("active");
+  updateFooter();
+}
+
+/* 👇 سحب يمين/شمال */
+let startX = 0;
+
+document.addEventListener("touchstart", e=>{
+  startX = e.touches[0].clientX;
+});
+
+document.addEventListener("touchend", e=>{
+  let endX = e.changedTouches[0].clientX;
+
+  if(startX - endX > 50){
+    changePage(1); // next
+  } else if(endX - startX > 50){
+    changePage(-1); // prev
+  }
+});
+
+// الوضع
+function toggleMode(){
+  document.body.classList.toggle("dark");
+  document.body.classList.toggle("light");
+}
+
+</script>
+
+</body>
+</html>
