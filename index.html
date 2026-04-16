@@ -11,6 +11,7 @@ body {
   margin: 0;
   font-family: "Amiri", serif;
   overflow: hidden;
+  transition: 0.3s;
 }
 
 body.dark { background:#0d0d0d; color:#f5f5f5; }
@@ -31,8 +32,15 @@ body.light { background:#f5f5f5; color:#111; }
   padding-bottom: 10px;
 }
 
-.surah-name { font-size: 24px; font-weight: bold; }
-.juz { font-size: 16px; color: gold; }
+.surah-name {
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.juz {
+  font-size: 16px;
+  color: gold;
+}
 
 /* التحكم */
 .controls {
@@ -47,15 +55,15 @@ select, button {
   font-size: 16px;
   border-radius: 8px;
   border: none;
+  cursor: pointer;
 }
 
-/* الآيات */
+/* المحتوى */
 .quran-container {
-  overflow: hidden;
   height: 65vh;
+  overflow: hidden;
   padding: 15px;
   direction: rtl;
-  position: relative;
 }
 
 .page {
@@ -74,7 +82,9 @@ select, button {
   margin-bottom: 10px;
 }
 
-.ayah-number { color: gold; }
+.ayah-number {
+  color: gold;
+}
 
 /* الفوتر */
 .footer {
@@ -90,6 +100,7 @@ select, button {
   to {opacity: 1;}
 }
 </style>
+
 </head>
 
 <body class="dark">
@@ -133,7 +144,7 @@ let currentPage = 0;
 let ayahsPerPage = 10;
 let currentAyahs = [];
 
-// السور dropdown
+// dropdown
 let select = document.getElementById("surahSelect");
 surahs.forEach((s,i)=>{
   let opt = document.createElement("option");
@@ -157,6 +168,7 @@ function loadSurah(num){
   .then(r=>r.json())
   .then(data=>{
     let surah = data.data;
+
     currentAyahs = surah.ayahs;
     currentPage = 0;
 
@@ -166,7 +178,7 @@ function loadSurah(num){
   });
 }
 
-// تقسيم الآيات صفحات
+// تقسيم الصفحات
 function renderPages(){
   let container = document.getElementById("quran");
   container.innerHTML = "";
@@ -177,7 +189,8 @@ function renderPages(){
     pages.push(currentAyahs.slice(i,i+ayahsPerPage));
   }
 
-  pages.forEach((page, index)=>{
+  pages.forEach((page,index)=>{
+
     let div = document.createElement("div");
     div.className = "page" + (index===0 ? " active":"");
 
@@ -186,22 +199,29 @@ function renderPages(){
 
     let juz = page[0].juz;
 
-    document.getElementById("infoHeader").innerText =
-      "الجزء " + juz;
+    if(index === 0){
+      document.getElementById("infoHeader").innerText =
+        "الجزء " + juz;
+    }
 
     page.forEach(a=>{
-      div.innerHTML += `<span class="ayah">${a.text} <span class="ayah-number">(${a.numberInSurah})</span></span>`;
+      div.innerHTML += `
+        <span class="ayah">
+          ${a.text}
+          <span class="ayah-number">(${a.numberInSurah})</span>
+        </span>
+      `;
     });
 
-    container.appendChild(div);
+    div.dataset.range = first + "-" + last;
 
-    div.dataset.range = first+"-"+last;
+    container.appendChild(div);
   });
 
   updateFooter();
 }
 
-// تحديث الفوتر
+// footer
 function updateFooter(){
   let pages = document.querySelectorAll(".page");
   let active = pages[currentPage];
@@ -216,35 +236,48 @@ function updateFooter(){
 // تغيير صفحة
 function changePage(dir){
   let pages = document.querySelectorAll(".page");
+
   pages[currentPage].classList.remove("active");
 
   currentPage += dir;
 
   if(currentPage < 0) currentPage = 0;
-  if(currentPage >= pages.length) currentPage = pages.length-1;
+  if(currentPage >= pages.length) currentPage = pages.length - 1;
 
   pages[currentPage].classList.add("active");
+
   updateFooter();
 }
 
-/* 👇 سحب يمين/شمال */
+/* Swipe من أي مكان */
 let startX = 0;
+let startY = 0;
 
-document.addEventListener("touchstart", e=>{
+document.addEventListener("touchstart", (e)=>{
   startX = e.touches[0].clientX;
-});
+  startY = e.touches[0].clientY;
+},{passive:true});
 
-document.addEventListener("touchend", e=>{
+document.addEventListener("touchend", (e)=>{
   let endX = e.changedTouches[0].clientX;
+  let endY = e.changedTouches[0].clientY;
 
-  if(startX - endX > 50){
-    changePage(1); // next
-  } else if(endX - startX > 50){
-    changePage(-1); // prev
+  let diffX = endX - startX;
+  let diffY = endY - startY;
+
+  if(Math.abs(diffX) > Math.abs(diffY)){
+
+    if(diffX < -60){
+      changePage(1);
+    }
+
+    if(diffX > 60){
+      changePage(-1);
+    }
   }
-});
+},{passive:true});
 
-// الوضع
+// dark/light
 function toggleMode(){
   document.body.classList.toggle("dark");
   document.body.classList.toggle("light");
