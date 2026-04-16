@@ -7,111 +7,101 @@
 <link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet">
 
 <style>
-body {
-  margin: 0;
-  font-family: "Amiri", serif;
-  overflow: hidden;
-  transition: 0.3s;
+body{
+  margin:0;
+  font-family:"Amiri",serif;
+  overflow:hidden;
+  transition:0.3s;
 }
 
-body.dark { background:#0d0d0d; color:#f5f5f5; }
-body.light { background:#f5f5f5; color:#111; }
+body.dark{background:#0d0d0d;color:#f5f5f5;}
+body.light{background:#f5f5f5;color:#111;}
 
-.quran-frame {
-  border: 10px solid gold;
-  border-radius: 20px;
-  margin: 15px;
-  padding: 10px;
-  box-shadow: 0 0 20px gold;
+.quran-frame{
+  border:10px solid gold;
+  border-radius:20px;
+  margin:15px;
+  padding:10px;
+  box-shadow:0 0 20px gold;
 }
 
 /* الهيدر */
-.header {
-  text-align: center;
-  border-bottom: 2px solid gold;
-  padding-bottom: 10px;
+.header{
+  text-align:center;
+  border-bottom:2px solid gold;
+  padding-bottom:10px;
 }
 
-.surah-name {
-  font-size: 24px;
-  font-weight: bold;
-}
+.surah-name{font-size:24px;font-weight:bold;}
+.juz{font-size:16px;color:gold;}
 
-.juz {
-  font-size: 16px;
-  color: gold;
-}
-
-/* بسم الله */
-.basmala {
-  text-align: center;
-  color: gold;
-  font-size: 22px;
-  margin: 10px 0;
+/* البسملة */
+.basmala{
+  text-align:center;
+  color:gold;
+  font-size:22px;
+  margin:10px 0;
 }
 
 /* التحكم */
-.controls {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 10px 0;
+.controls{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  margin:10px 0;
 }
 
-select, button {
-  padding: 8px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
+select,button{
+  padding:8px;
+  border-radius:8px;
+  border:none;
+  font-size:16px;
 }
 
-/* الصفحة */
-.quran-container {
-  height: 65vh;
-  overflow: hidden;
-  padding: 15px;
-  direction: rtl;
-  perspective: 1200px;
+/* المصحف */
+.quran-container{
+  height:65vh;
+  overflow:hidden;
+  padding:15px;
+  direction:rtl;
+  perspective:1000px;
 }
 
-/* أنيميشن قلب الصفحة */
-.page {
-  display: none;
-  transform: rotateY(90deg);
-  opacity: 0;
-  transition: 0.6s ease;
+/* صفحة المصحف */
+.page{
+  display:none;
+  transform:rotateY(90deg);
+  transition:0.6s ease;
 }
 
-.page.active {
-  display: inline;
-  transform: rotateY(0deg);
-  opacity: 1;
+.page.active{
+  display:block;
+  transform:rotateY(0deg);
 }
 
 /* الآيات جنب بعض */
-.ayah {
-  font-size: 22px;
-  line-height: 2.4;
-  display: inline;
-  margin-left: 8px;
+.ayah{
+  font-size:22px;
+  line-height:2.5;
+  display:inline;
 }
 
-.ayah-number {
-  color: gold;
-  font-size: 16px;
+.ayah-number{
+  color:gold;
+  margin:0 5px;
+  font-size:18px;
 }
 
-/* الفوتر */
-.footer {
-  text-align: center;
-  border-top: 2px solid gold;
-  padding-top: 10px;
-  margin-top: 10px;
-  color: gold;
+/* footer */
+.footer{
+  text-align:center;
+  border-top:2px solid gold;
+  padding-top:10px;
+  margin-top:10px;
+  color:gold;
 }
+
 </style>
-
 </head>
 
 <body class="dark">
@@ -123,7 +113,7 @@ select, button {
     <div class="juz" id="infoHeader"></div>
   </div>
 
-  <div class="basmala">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
+  <div class="basmala">بسم الله الرحمن الرحيم</div>
 
   <div class="controls">
     <select id="surahSelect"></select>
@@ -138,7 +128,7 @@ select, button {
 
 <script>
 
-const surahs = [
+const surahs=[
 "الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
 "هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه",
 "الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم",
@@ -153,68 +143,73 @@ const surahs = [
 "المسد","الإخلاص","الفلق","الناس"
 ];
 
-let currentPage = 0;
-let ayahsPerPage = 8;
-let currentAyahs = [];
+let currentPage=0;
+let ayahsPerPage=5; // 👈 قللنا العدد
+let currentAyahs=[];
 
-// dropdown
-let select = document.getElementById("surahSelect");
+let select=document.getElementById("surahSelect");
 
 surahs.forEach((s,i)=>{
-  let opt = document.createElement("option");
-  opt.value = i+1;
-  opt.text = (i+1)+" - "+s;
-  select.appendChild(opt);
+  let o=document.createElement("option");
+  o.value=i+1;
+  o.text=(i+1)+" - "+s;
+  select.appendChild(o);
 });
 
-// آخر سورة محفوظة
-let lastSurah = localStorage.getItem("lastSurah") || 1;
-select.value = lastSurah;
-loadSurah(lastSurah);
+let last=localStorage.getItem("lastSurah")||1;
+let lastPage=localStorage.getItem("lastPage")||0;
 
-select.onchange = ()=>{
-  loadSurah(select.value);
-  localStorage.setItem("lastSurah", select.value);
+select.value=last;
+
+loadSurah(last,true);
+
+select.onchange=()=>{
+  loadSurah(select.value,true);
+  localStorage.setItem("lastSurah",select.value);
 };
 
 // تحميل السورة
-function loadSurah(num){
+function loadSurah(num,resetPage){
   fetch(`https://api.alquran.cloud/v1/surah/${num}`)
   .then(r=>r.json())
   .then(data=>{
-    let surah = data.data;
+    let surah=data.data;
 
-    currentAyahs = surah.ayahs;
-    currentPage = parseInt(localStorage.getItem("lastPage_"+num)) || 0;
+    currentAyahs=surah.ayahs;
 
-    document.getElementById("surahName").innerText = "سورة " + surah.name;
-    document.getElementById("infoHeader").innerText = "الجزء " + surah.ayahs[0].juz;
+    if(resetPage){
+      currentPage=parseInt(lastPage)||0;
+    }else{
+      currentPage=0;
+    }
 
-    renderPages(num);
+    document.getElementById("surahName").innerText="سورة "+surah.name;
+
+    renderPages();
   });
 }
 
 // تقسيم الصفحات
-function renderPages(surahNum){
-  let container = document.getElementById("quran");
-  container.innerHTML = "";
+function renderPages(){
+  let container=document.getElementById("quran");
+  container.innerHTML="";
 
-  let pages = [];
+  let pages=[];
 
   for(let i=0;i<currentAyahs.length;i+=ayahsPerPage){
     pages.push(currentAyahs.slice(i,i+ayahsPerPage));
   }
 
-  pages.forEach((page,index)=>{
-    let div = document.createElement("div");
-    div.className = "page";
+  pages.forEach((page,i)=>{
+    let div=document.createElement("div");
+    div.className="page"+(i===currentPage?" active":"");
 
-    if(index === currentPage){
-      div.classList.add("active");
-    }
+    let first=page[0].numberInSurah;
+    let last=page[page.length-1].numberInSurah;
+    let juz=page[0].juz;
 
     page.forEach(a=>{
-      div.innerHTML += `
+      div.innerHTML+=`
         <span class="ayah">
           ${a.text}
           <span class="ayah-number">(${a.numberInSurah})</span>
@@ -223,58 +218,60 @@ function renderPages(surahNum){
     });
 
     container.appendChild(div);
+
+    if(i===currentPage){
+      document.getElementById("infoHeader").innerText="الجزء "+juz;
+      document.getElementById("pageInfo").innerText=
+      "الآيات "+first+" - "+last+" | صفحة "+(i+1)+"/"+pages.length;
+    }
   });
 
-  updateFooter(pages.length);
+  savePage();
 }
 
-// footer
-function updateFooter(total){
-  document.getElementById("pageInfo").innerText =
-    "صفحة " + (currentPage+1) + " / " + total;
-}
-
-// تغيير الصفحة
+// تغيير صفحة
 function changePage(dir){
-  let pages = document.querySelectorAll(".page");
+  let pages=document.querySelectorAll(".page");
 
   pages[currentPage].classList.remove("active");
 
-  currentPage += dir;
+  currentPage+=dir;
 
-  if(currentPage < 0) currentPage = 0;
-  if(currentPage >= pages.length) currentPage = pages.length-1;
+  if(currentPage<0)currentPage=0;
+  if(currentPage>=pages.length)currentPage=pages.length-1;
 
   pages[currentPage].classList.add("active");
 
-  localStorage.setItem("lastPage_"+select.value, currentPage);
-
-  updateFooter(pages.length);
+  renderPages();
 }
 
-/* Swipe احترافي */
-let startX = 0;
-let startY = 0;
+// حفظ الصفحة
+function savePage(){
+  localStorage.setItem("lastPage",currentPage);
+}
 
-document.addEventListener("touchstart", (e)=>{
-  startX = e.touches[0].clientX;
-  startY = e.touches[0].clientY;
+// swipe (عربي: يسار → يمين = next)
+let startX=0;
+
+document.addEventListener("touchstart",(e)=>{
+  startX=e.touches[0].clientX;
 },{passive:true});
 
-document.addEventListener("touchend", (e)=>{
-  let endX = e.changedTouches[0].clientX;
-  let endY = e.changedTouches[0].clientY;
+document.addEventListener("touchend",(e)=>{
+  let endX=e.changedTouches[0].clientX;
 
-  let diffX = endX - startX;
-  let diffY = endY - startY;
+  let diff=endX-startX;
 
-  if(Math.abs(diffX) > Math.abs(diffY)){
-    if(diffX < -50) changePage(1);
-    if(diffX > 50) changePage(-1);
+  if(Math.abs(diff)>60){
+    if(diff>0){
+      changePage(1); // يمين → التالي
+    }else{
+      changePage(-1); // شمال → السابق
+    }
   }
 },{passive:true});
 
-// dark/light
+// mode
 function toggleMode(){
   document.body.classList.toggle("dark");
   document.body.classList.toggle("light");
