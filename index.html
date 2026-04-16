@@ -32,14 +32,21 @@ body.light{background:#f5f5f5;color:#111;}
   padding-bottom:10px;
 }
 
-.surah-name{font-size:24px;font-weight:bold;}
-.juz{font-size:16px;color:gold;}
+.surah-name{
+  font-size:22px;
+  font-weight:bold;
+}
+
+.juz{
+  font-size:14px;
+  color:gold;
+}
 
 /* البسملة */
 .basmala{
   text-align:center;
   color:gold;
-  font-size:22px;
+  font-size:20px;
   margin:10px 0;
 }
 
@@ -55,23 +62,24 @@ select,button{
   padding:8px;
   border-radius:8px;
   border:none;
-  font-size:16px;
+  font-size:14px;
+  cursor:pointer;
 }
 
 /* المصحف */
 .quran-container{
   height:65vh;
   overflow:hidden;
-  padding:15px;
+  padding:10px;
   direction:rtl;
   perspective:1000px;
 }
 
-/* صفحة المصحف */
+/* الصفحات */
 .page{
   display:none;
   transform:rotateY(90deg);
-  transition:0.6s ease;
+  transition:0.5s ease;
 }
 
 .page.active{
@@ -79,17 +87,17 @@ select,button{
   transform:rotateY(0deg);
 }
 
-/* الآيات جنب بعض */
+/* الآيات */
 .ayah{
-  font-size:22px;
-  line-height:2.5;
+  font-size:18px;   /* 👈 تصغير الخط */
+  line-height:2.3;
   display:inline;
 }
 
 .ayah-number{
   color:gold;
-  margin:0 5px;
-  font-size:18px;
+  margin:0 4px;
+  font-size:14px;
 }
 
 /* footer */
@@ -99,6 +107,7 @@ select,button{
   padding-top:10px;
   margin-top:10px;
   color:gold;
+  font-size:14px;
 }
 
 </style>
@@ -144,7 +153,7 @@ const surahs=[
 ];
 
 let currentPage=0;
-let ayahsPerPage=5; // 👈 قللنا العدد
+let ayahsPerPage=5;
 let currentAyahs=[];
 
 let select=document.getElementById("surahSelect");
@@ -161,27 +170,22 @@ let lastPage=localStorage.getItem("lastPage")||0;
 
 select.value=last;
 
-loadSurah(last,true);
+loadSurah(last);
 
 select.onchange=()=>{
-  loadSurah(select.value,true);
+  loadSurah(select.value);
   localStorage.setItem("lastSurah",select.value);
 };
 
 // تحميل السورة
-function loadSurah(num,resetPage){
+function loadSurah(num){
   fetch(`https://api.alquran.cloud/v1/surah/${num}`)
   .then(r=>r.json())
   .then(data=>{
     let surah=data.data;
 
     currentAyahs=surah.ayahs;
-
-    if(resetPage){
-      currentPage=parseInt(lastPage)||0;
-    }else{
-      currentPage=0;
-    }
+    currentPage=parseInt(localStorage.getItem("lastPage"))||0;
 
     document.getElementById("surahName").innerText="سورة "+surah.name;
 
@@ -222,14 +226,14 @@ function renderPages(){
     if(i===currentPage){
       document.getElementById("infoHeader").innerText="الجزء "+juz;
       document.getElementById("pageInfo").innerText=
-      "الآيات "+first+" - "+last+" | صفحة "+(i+1)+"/"+pages.length;
+        "الآيات "+first+" - "+last+" | صفحة "+(i+1)+"/"+pages.length;
     }
   });
 
   savePage();
 }
 
-// تغيير صفحة
+// تغيير الصفحة
 function changePage(dir){
   let pages=document.querySelectorAll(".page");
 
@@ -250,7 +254,7 @@ function savePage(){
   localStorage.setItem("lastPage",currentPage);
 }
 
-// swipe (عربي: يسار → يمين = next)
+// 🔥 SWIPE معكوس
 let startX=0;
 
 document.addEventListener("touchstart",(e)=>{
@@ -263,15 +267,17 @@ document.addEventListener("touchend",(e)=>{
   let diff=endX-startX;
 
   if(Math.abs(diff)>60){
+
     if(diff>0){
-      changePage(1); // يمين → التالي
+      changePage(-1); // يمين = السابق
     }else{
-      changePage(-1); // شمال → السابق
+      changePage(1);  // شمال = التالي
     }
+
   }
 },{passive:true});
 
-// mode
+// الوضع
 function toggleMode(){
   document.body.classList.toggle("dark");
   document.body.classList.toggle("light");
