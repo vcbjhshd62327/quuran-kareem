@@ -2,286 +2,232 @@
 <html lang="ar">
 <head>
 <meta charset="UTF-8">
-<title>القرآن الكريم</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المصحف الشريف</title>
 
 <style>
-body{
-  margin:0;
-  font-family:"Amiri",serif;
-  overflow:hidden;
-  transition:0.3s;
+body {
+    margin:0;
+    font-family: Arial;
+    direction: rtl;
+    background:#f5ecd7;
+    transition:0.3s;
 }
 
-body.dark{background:#0d0d0d;color:#f5f5f5;}
-body.light{background:#f5f5f5;color:#111;}
-
-.quran-frame{
-  border:10px solid gold;
-  border-radius:20px;
-  margin:15px;
-  padding:10px;
-  box-shadow:0 0 20px gold;
+/* Dark Mode */
+body.dark {
+    background:#111;
+    color:white;
 }
 
-/* الهيدر */
-.header{
-  text-align:center;
-  border-bottom:2px solid gold;
-  padding-bottom:10px;
+/* Header */
+.top-bar {
+    display:flex;
+    justify-content:space-between;
+    padding:10px;
+    background:#c9a646;
+    color:white;
+    font-weight:bold;
 }
 
-.surah-name{
-  font-size:22px;
-  font-weight:bold;
+/* Sidebar */
+.sidebar {
+    position:fixed;
+    left:0;
+    top:0;
+    width:200px;
+    height:100%;
+    background:#222;
+    color:white;
+    overflow-y:auto;
+    padding:10px;
 }
 
-.juz{
-  font-size:14px;
-  color:gold;
+.sidebar div {
+    padding:8px;
+    cursor:pointer;
 }
 
-/* البسملة */
-.basmala{
-  text-align:center;
-  color:gold;
-  font-size:20px;
-  margin:10px 0;
+.sidebar div:hover {
+    background:#444;
 }
 
-/* التحكم */
-.controls{
-  display:flex;
-  justify-content:center;
-  gap:10px;
-  margin:10px 0;
+/* Content */
+.main {
+    margin-left:200px;
+    padding:20px;
 }
 
-select,button{
-  padding:8px;
-  border-radius:8px;
-  border:none;
-  font-size:14px;
-  cursor:pointer;
+/* Frame */
+.frame {
+    border:5px solid gold;
+    border-radius:20px;
+    padding:20px;
+    position:relative;
 }
 
-/* المصحف */
-.quran-container{
-  height:65vh;
-  overflow:hidden;
-  padding:10px;
-  direction:rtl;
-  perspective:1000px;
+/* Bismillah */
+.bismillah {
+    text-align:center;
+    color:gold;
+    margin:10px 0;
 }
 
-/* الصفحات */
-.page{
-  display:none;
-  transform:rotateY(90deg);
-  transition:0.5s ease;
+/* Ayah */
+.ayah {
+    font-size:18px;
+    margin:10px 0;
 }
 
-.page.active{
-  display:block;
-  transform:rotateY(0deg);
+/* Page Number */
+.page-number {
+    position:absolute;
+    bottom:-15px;
+    left:50%;
+    transform:translateX(-50%);
+    background:gold;
+    color:black;
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
 }
 
-/* الآيات */
-.ayah{
-  font-size:18px;   /* 👈 تصغير الخط */
-  line-height:2.3;
-  display:inline;
+/* Controls */
+.controls {
+    text-align:center;
+    margin-top:10px;
 }
 
-.ayah-number{
-  color:gold;
-  margin:0 4px;
-  font-size:14px;
+button {
+    padding:10px;
+    margin:5px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
 }
-
-/* footer */
-.footer{
-  text-align:center;
-  border-top:2px solid gold;
-  padding-top:10px;
-  margin-top:10px;
-  color:gold;
-  font-size:14px;
-}
-
 </style>
 </head>
 
-<body class="dark">
+<body>
 
-<div class="quran-frame">
+<!-- Sidebar -->
+<div class="sidebar" id="surahList"></div>
 
-  <div class="header">
-    <div class="surah-name" id="surahName"></div>
-    <div class="juz" id="infoHeader"></div>
-  </div>
+<!-- Main -->
+<div class="main">
 
-  <div class="basmala">بسم الله الرحمن الرحيم</div>
+<div class="top-bar">
+    <div id="surahName">اسم السورة</div>
+    <div id="juzNumber">الجزء 1</div>
+</div>
 
-  <div class="controls">
-    <select id="surahSelect"></select>
-    <button onclick="toggleMode()">🌙/☀️</button>
-  </div>
+<div class="frame">
 
-  <div class="quran-container" id="quran"></div>
+<div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
 
-  <div class="footer" id="pageInfo"></div>
+<div id="ayahContainer"></div>
+
+<div class="page-number" id="pageNum">1</div>
+
+</div>
+
+<div class="controls">
+<button onclick="prevPage()">⬅️ السابق</button>
+<button onclick="nextPage()">التالي ➡️</button>
+<button onclick="toggleDark()">🌙</button>
+</div>
 
 </div>
 
 <script>
 
-const surahs=[
-"الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
-"هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه",
-"الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم",
-"لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر",
-"فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق",
-"الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة",
-"الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج",
-"نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس",
-"التكوير","الإنفطار","المطففين","الإنشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد",
-"الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات",
-"القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر",
-"المسد","الإخلاص","الفلق","الناس"
-];
+// API القرآن
+const api = "https://api.alquran.cloud/v1/quran/ar";
 
-let currentPage=0;
-let ayahsPerPage=5;
-let currentAyahs=[];
+let allPages = [];
+let currentPage = 0;
 
-let select=document.getElementById("surahSelect");
+// تحميل القرآن
+fetch(api)
+.then(res => res.json())
+.then(data => {
 
-surahs.forEach((s,i)=>{
-  let o=document.createElement("option");
-  o.value=i+1;
-  o.text=(i+1)+" - "+s;
-  select.appendChild(o);
-});
+    const surahs = data.data.surahs;
 
-let last=localStorage.getItem("lastSurah")||1;
-let lastPage=localStorage.getItem("lastPage")||0;
+    // إنشاء قائمة السور
+    const list = document.getElementById("surahList");
 
-select.value=last;
-
-loadSurah(last);
-
-select.onchange=()=>{
-  loadSurah(select.value);
-  localStorage.setItem("lastSurah",select.value);
-};
-
-// تحميل السورة
-function loadSurah(num){
-  fetch(`https://api.alquran.cloud/v1/surah/${num}`)
-  .then(r=>r.json())
-  .then(data=>{
-    let surah=data.data;
-
-    currentAyahs=surah.ayahs;
-    currentPage=parseInt(localStorage.getItem("lastPage"))||0;
-
-    document.getElementById("surahName").innerText="سورة "+surah.name;
-
-    renderPages();
-  });
-}
-
-// تقسيم الصفحات
-function renderPages(){
-  let container=document.getElementById("quran");
-  container.innerHTML="";
-
-  let pages=[];
-
-  for(let i=0;i<currentAyahs.length;i+=ayahsPerPage){
-    pages.push(currentAyahs.slice(i,i+ayahsPerPage));
-  }
-
-  pages.forEach((page,i)=>{
-    let div=document.createElement("div");
-    div.className="page"+(i===currentPage?" active":"");
-
-    let first=page[0].numberInSurah;
-    let last=page[page.length-1].numberInSurah;
-    let juz=page[0].juz;
-
-    page.forEach(a=>{
-      div.innerHTML+=`
-        <span class="ayah">
-          ${a.text}
-          <span class="ayah-number">(${a.numberInSurah})</span>
-        </span>
-      `;
+    surahs.forEach((s, index) => {
+        let div = document.createElement("div");
+        div.innerText = s.name;
+        div.onclick = () => goToSurah(index);
+        list.appendChild(div);
     });
 
-    container.appendChild(div);
+    // تقسيم لصفحات (10 آيات)
+    surahs.forEach(surah => {
+        for (let i = 0; i < surah.ayahs.length; i += 10) {
+            allPages.push({
+                name: surah.name,
+                ayahs: surah.ayahs.slice(i, i+10).map(a => a.text),
+                juz: surah.ayahs[i].juz
+            });
+        }
+    });
 
-    if(i===currentPage){
-      document.getElementById("infoHeader").innerText="الجزء "+juz;
-      document.getElementById("pageInfo").innerText=
-        "الآيات "+first+" - "+last+" | صفحة "+(i+1)+"/"+pages.length;
+    loadPage(0);
+});
+
+// تحميل صفحة
+function loadPage(i){
+    currentPage = i;
+
+    let page = allPages[i];
+
+    document.getElementById("surahName").innerText = page.name;
+    document.getElementById("juzNumber").innerText = "الجزء " + page.juz;
+
+    document.getElementById("ayahContainer").innerHTML =
+        page.ayahs.map(a => `<div class="ayah">${a}</div>`).join("");
+
+    document.getElementById("pageNum").innerText = i + 1;
+
+    localStorage.setItem("lastPage", i);
+}
+
+// التالي
+function nextPage(){
+    if(currentPage < allPages.length-1){
+        loadPage(currentPage + 1);
     }
-  });
-
-  savePage();
 }
 
-// تغيير الصفحة
-function changePage(dir){
-  let pages=document.querySelectorAll(".page");
-
-  pages[currentPage].classList.remove("active");
-
-  currentPage+=dir;
-
-  if(currentPage<0)currentPage=0;
-  if(currentPage>=pages.length)currentPage=pages.length-1;
-
-  pages[currentPage].classList.add("active");
-
-  renderPages();
-}
-
-// حفظ الصفحة
-function savePage(){
-  localStorage.setItem("lastPage",currentPage);
-}
-
-// 🔥 SWIPE معكوس
-let startX=0;
-
-document.addEventListener("touchstart",(e)=>{
-  startX=e.touches[0].clientX;
-},{passive:true});
-
-document.addEventListener("touchend",(e)=>{
-  let endX=e.changedTouches[0].clientX;
-
-  let diff=endX-startX;
-
-  if(Math.abs(diff)>60){
-
-    if(diff>0){
-      changePage(-1); // يمين = السابق
-    }else{
-      changePage(1);  // شمال = التالي
+// السابق
+function prevPage(){
+    if(currentPage > 0){
+        loadPage(currentPage - 1);
     }
-
-  }
-},{passive:true});
-
-// الوضع
-function toggleMode(){
-  document.body.classList.toggle("dark");
-  document.body.classList.toggle("light");
 }
+
+// اختيار سورة
+function goToSurah(index){
+    let pageIndex = allPages.findIndex(p => p.name === allPages[index].name);
+    loadPage(pageIndex);
+}
+
+// Dark Mode
+function toggleDark(){
+    document.body.classList.toggle("dark");
+}
+
+// تحميل آخر صفحة
+window.onload = () => {
+    let last = localStorage.getItem("lastPage");
+    if(last) currentPage = parseInt(last);
+};
 
 </script>
 
